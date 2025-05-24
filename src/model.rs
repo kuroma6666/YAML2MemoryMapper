@@ -41,7 +41,9 @@ pub enum Type {
     Uint16,
     Uint32,
     #[serde(rename_all = "snake_case")]
-    StructWrapper { r#struct: Vec<Entry> },
+    StructWrapper {
+        r#struct: Vec<Entry>,
+    },
     #[serde(rename = "custom")]
     Custom(String),
 }

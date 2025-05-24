@@ -17,8 +17,8 @@ pub fn size_of(ty: &Type) -> usize {
                 offset += pad + field_size;
             }
             offset
-        },
-        Type::Custom(_) => 0, // 解決されるまで未定義
+        }
+        Type::Custom(_) => 0,          // 解決されるまで未定義
         Type::CustomCandidate(_) => 0, // 解決されるまで未定義
     }
 }
