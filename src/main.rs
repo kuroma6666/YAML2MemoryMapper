@@ -1,10 +1,12 @@
-use yaml2_memory_mapper::parser::load_yaml;
-use yaml2_memory_mapper::generator::generate_c_structs;
 use std::fs::File;
 use std::io::Write;
+use yaml2_memory_mapper::generator::generate_c_structs;
+use yaml2_memory_mapper::parser::load_yaml;
 
 fn main() {
-    let path = std::env::args().nth(1).expect("Usage: eeprom_mapper <input.yaml>");
+    let path = std::env::args()
+        .nth(1)
+        .expect("Usage: eeprom_mapper <input.yaml>");
     match load_yaml(&path) {
         Ok(map) => {
             println!("Successfully loaded EEPROM map: {:?}", map);

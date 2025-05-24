@@ -35,23 +35,28 @@ fn resolve_type(ty: &mut Type, types: &HashMap<String, Vec<Entry>>) -> Result<()
                 Ok(())
             }
         }
-        Type::CustomCandidate(name) => {
-            match name.as_str() {
-                "uint8" => { *ty = Type::Uint8; Ok(()) }
-                "uint16" => { *ty = Type::Uint16; Ok(()) }
-                "uint32" => { *ty = Type::Uint32; Ok(()) }
-                _ => {
-                    if types.contains_key(name) {
-                        *ty = Type::Custom(name.clone());
-                        Ok(())
-                    } else {
-                        Err(format!("Unknown type '{}'", name))
-                    }
+        Type::CustomCandidate(name) => match name.as_str() {
+            "uint8" => {
+                *ty = Type::Uint8;
+                Ok(())
+            }
+            "uint16" => {
+                *ty = Type::Uint16;
+                Ok(())
+            }
+            "uint32" => {
+                *ty = Type::Uint32;
+                Ok(())
+            }
+            _ => {
+                if types.contains_key(name) {
+                    *ty = Type::Custom(name.clone());
+                    Ok(())
+                } else {
+                    Err(format!("Unknown type '{}'", name))
                 }
             }
-        }
+        },
         Type::Uint8 | Type::Uint16 | Type::Uint32 => Ok(()),
     }
 }
-
-
