@@ -29,12 +29,18 @@ fn generate_struct(name: &str, fields: &[Entry], map: &EepromMap, visited: &mut 
             Type::Uint8 => "uint8_t".to_string(),
             Type::Uint16 => "uint16_t".to_string(),
             Type::Uint32 => "uint32_t".to_string(),
-            Type::Struct(subfields) => {
+            Type::StructWrapper { r#struct: subfields } => {
                 let subname = format!("{}_t", field.name);
                 generate_struct(&field.name, subfields, map, visited, output);
                 subname
             }
             Type::Custom(s) => {
+                if let Some(custom_fields) = map.types.get(s) {
+                    generate_struct(s, custom_fields, map, visited, output);
+                }
+                format!("{}_t", s)
+            }
+            Type::CustomCandidate(s) => {
                 if let Some(custom_fields) = map.types.get(s) {
                     generate_struct(s, custom_fields, map, visited, output);
                 }
@@ -54,7 +60,7 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
     let mut visited = HashSet::new();
 
     for entry in &map.entries {
-        if let Type::Struct(ref fields) = entry.ty {
+        if let Type::StructWrapper { r#struct: fields } = &entry.ty {
             generate_struct(&entry.name, fields, map, &mut visited, &mut output);
         } else if let Type::Custom(ref name) = entry.ty {
             if let Some(fields) = map.types.get(name) {
@@ -83,8 +89,9 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
             Type::Uint8 => "uint8_t".to_string(),
             Type::Uint16 => "uint16_t".to_string(),
             Type::Uint32 => "uint32_t".to_string(),
-            Type::Struct(_) => format!("{}_t", entry.name),
+            Type::StructWrapper { .. } => format!("{}_t", entry.name),
             Type::Custom(s) => format!("{}_t", s),
+            Type::CustomCandidate(s) => format!("{}_t", s),
         };
         writeln!(output, "    {} {};", c_type, entry.name).unwrap();
         current_offset += size;
