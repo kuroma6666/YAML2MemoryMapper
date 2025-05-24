@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
@@ -22,7 +23,7 @@ pub enum Endianness {
     Big,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Entry {
     pub name: String,
@@ -32,12 +33,15 @@ pub struct Entry {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum Type {
+    CustomCandidate(String),
     Uint8,
     Uint16,
     Uint32,
-    Struct(Vec<Entry>),
+    #[serde(rename_all = "snake_case")]
+    StructWrapper { r#struct: Vec<Entry> },
+    #[serde(rename = "custom")]
     Custom(String),
 }
