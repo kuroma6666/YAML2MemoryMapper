@@ -1,10 +1,5 @@
-mod model;
-mod parser;
-mod utils;
-mod generator;
-
-use crate::parser::load_yaml;
-use crate::generator::generate_c_structs;
+use yaml2_memory_mapper::parser::load_yaml;
+use yaml2_memory_mapper::generator::generate_c_structs;
 use std::fs::File;
 use std::io::Write;
 

@@ -2,7 +2,7 @@
 
 YAMLファイルでEEPROMマップを定義し、対応するC言語の構造体 (`.h`) を生成するツールです。
 
-## 📦 使用方法
+## 💼 使用方法
 
 ```powershell
 cargo run -- examples\eeprom.yaml
@@ -24,50 +24,26 @@ cargo run -- examples\eeprom.yaml
 
 ### 🔹 型定義の方法
 
-#### ▶ プリミティブ型
+#### ✅ サポートされるプリミティブ型
 
-```yaml
-- name: device_id
-  offset: 0
-  type: uint16
-```
+| 型名       | 説明          |
+| -------- | ----------- |
+| `uint8`  | 8ビット符号なし整数  |
+| `uint16` | 16ビット符号なし整数 |
+| `uint32` | 32ビット符号なし整数 |
 
-#### ▶ ネスト構造体（inline）
+本ツールは、型を自動で判別・補正する機能を備えています。
+そのため `type: uint8` のように文字列で指定した場合も、プリミティブ型やユーザー定義型として自動で解釈されます。
 
-```yaml
-- name: settings
-  offset: 10
-  type:
-    struct:
-      - name: brightness
-        offset: 0
-        type: uint8
-      - name: volume
-        offset: 1
-        type: uint8
-```
+次のYAMLファイルがそれぞれの型定義方法のサンプルとして提供されています：
 
-#### ▶ 事前定義構造体（custom）
+* [primitive.yaml](examples/primitive.yaml)：プリミティブ型の定義例
+* [nested\_struct.yaml](examples/nested_struct.yaml)：ネスト構造体（inline定義）
+* [custom\_autodetect.yaml](examples/custom_autodetect.yaml)：カスタム型（補正対応）の定義例
 
-```yaml
-types:
-  settings:
-    - name: brightness
-      offset: 0
-      type: uint8
-    - name: volume
-      offset: 1
-      type: uint8
+各形式の詳細はこれらのファイルをご参照ください。
 
-entries:
-  - name: settings
-    offset: 10
-    type: !custom settings
-```
-
-※ YAMLタグ `!custom` により `settings` を事前定義型として展開
-
-## 🗂 出力例（eeprom\_map.h）
+## 📂 出力例（eeprom\_map.h）
 
 ```c
 typedef struct {

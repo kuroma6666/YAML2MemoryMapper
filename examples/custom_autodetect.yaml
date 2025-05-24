@@ -1,0 +1,18 @@
+version: 1
+base_address: 0
+endianness: little
+
+types:
+  settings:
+    - name: brightness
+      offset: 0
+      type: uint8
+    - name: volume
+      offset: 1
+      type: uint8
+
+entries:
+  - name: settings
+    offset: 10
+    type: settings
+    description: 自動補正されるカスタム構造体

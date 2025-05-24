@@ -5,7 +5,7 @@ pub fn size_of(ty: &Type) -> usize {
         Type::Uint8 => 1,
         Type::Uint16 => 2,
         Type::Uint32 => 4,
-        Type::Struct(fields) => {
+        Type::StructWrapper { r#struct: fields } => {
             let mut offset = 0;
             for field in fields {
                 let field_size = size_of(&field.ty);
@@ -19,6 +19,7 @@ pub fn size_of(ty: &Type) -> usize {
             offset
         },
         Type::Custom(_) => 0, // 解決されるまで未定義
+        Type::CustomCandidate(_) => 0, // 解決されるまで未定義
     }
 }
 
