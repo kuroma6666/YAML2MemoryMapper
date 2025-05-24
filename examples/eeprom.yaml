@@ -1,0 +1,28 @@
+version: 1
+base_address: 0
+endianness: little
+
+types:
+  settings:
+    - name: brightness
+      offset: 0
+      type: uint8
+    - name: volume
+      offset: 1
+      type: uint8
+
+entries:
+  - name: device_id
+    offset: 0
+    type: uint16
+    description: デバイス識別子
+
+  - name: firmware_version
+    offset: 2
+    type: uint8
+    description: FWバージョン
+
+  - name: settings
+    offset: 3
+    type: !custom settings
+    description: 設定構造体

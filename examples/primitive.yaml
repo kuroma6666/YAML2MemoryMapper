@@ -1,0 +1,12 @@
+version: 1
+base_address: 0
+endianness: little
+
+entries:
+  - name: device_id
+    offset: 0
+    type: uint16
+
+  - name: firmware_version
+    offset: 2
+    type: uint8

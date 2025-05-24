@@ -1,0 +1,14 @@
+version: 1
+base_address: 0
+endianness: little
+
+entries:
+  - name: settings
+    offset: 0
+    type: !struct
+      - name: brightness
+        offset: 0
+        type: uint8
+      - name: volume
+        offset: 1
+        type: uint8
