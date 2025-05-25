@@ -4,10 +4,16 @@ use std::collections::HashMap;
 pub fn resolve_types(map: &mut EepromMap) -> Result<(), String> {
     let keys: Vec<String> = map.types.keys().cloned().collect();
     for key in keys {
-        let types_snapshot = map.types.clone(); // 回避策: cloneで不変参照を確保
+        let types_snapshot = map.types.clone();
         if let Some(fields) = map.types.get_mut(&key) {
             for field in fields.iter_mut() {
                 resolve_type(&mut field.ty, &types_snapshot)?;
+                if let Some(length) = field.length {
+                    field.ty = Type::Array {
+                        base: Box::new(field.ty.clone()),
+                        length,
+                    };
+                }
             }
         }
     }
@@ -15,6 +21,12 @@ pub fn resolve_types(map: &mut EepromMap) -> Result<(), String> {
     let types_snapshot = map.types.clone();
     for entry in &mut map.entries {
         resolve_type(&mut entry.ty, &types_snapshot)?;
+        if let Some(length) = entry.length {
+            entry.ty = Type::Array {
+                base: Box::new(entry.ty.clone()),
+                length,
+            };
+        }
     }
 
     Ok(())
@@ -27,6 +39,9 @@ fn resolve_type(ty: &mut Type, types: &HashMap<String, Vec<Entry>>) -> Result<()
                 resolve_type(&mut field.ty, types)?;
             }
             Ok(())
+        }
+        Type::Array { base, length: _ } => {
+            resolve_type(base, types)
         }
         Type::Custom(name) => {
             if !types.contains_key(name) {
