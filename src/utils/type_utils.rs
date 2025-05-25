@@ -9,11 +9,7 @@ pub fn size_of(ty: &Type) -> usize {
             let mut offset = 0;
             for field in fields {
                 let field_size = size_of(&field.ty);
-                let pad = if field.offset as usize > offset {
-                    field.offset as usize - offset
-                } else {
-                    0
-                };
+                let pad = (field.offset as usize).saturating_sub(offset);
                 offset += pad + field_size;
             }
             offset
