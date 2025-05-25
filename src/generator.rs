@@ -1,5 +1,5 @@
 use crate::model::{EepromMap, Entry, Type};
-use crate::utils::size_of;
+use crate::utils::type_utils::size_of;
 use std::collections::HashSet;
 use std::fmt::Write;
 
