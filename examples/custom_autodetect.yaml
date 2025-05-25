@@ -10,9 +10,22 @@ types:
     - name: volume
       offset: 1
       type: uint8
+  device:
+    - name: device_id
+      offset: 0
+      type: uint16
+    - name: firmware_version
+      offset: 2
+      type: uint8
 
 entries:
   - name: settings
     offset: 10
     type: settings
     description: 自動補正されるカスタム構造体
+  - name: devices
+    offset: 20
+    type: device
+    length: 3
+    description: 自動補正されるカスタム構造体の配列
+  
