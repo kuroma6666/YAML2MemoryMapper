@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::Write;
-use yaml2_memory_mapper::generator::generate_c_structs;
+use yaml2_memory_mapper::generator::c_struct::generate_c_structs;
 use yaml2_memory_mapper::parser::load_yaml;
 use yaml2_memory_mapper::utils::file_utils::get_header_path;
 
