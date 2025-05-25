@@ -1,3 +1,4 @@
+use crate::generator::c_define::generate_defines;
 use crate::model::{EepromMap, Entry, Type};
 use crate::utils::type_utils::size_of;
 use std::collections::HashSet;
@@ -75,7 +76,8 @@ fn generate_struct(
 pub fn generate_c_structs(map: &EepromMap) -> String {
     let mut output = String::new();
     writeln!(output, "#pragma once\n#include <stdint.h>\n").unwrap();
-
+    let defines = generate_defines(map);
+    writeln!(output, "{}", defines).unwrap();
     let mut visited = HashSet::new();
 
     // 先に user-defined types を展開しておく
