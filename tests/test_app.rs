@@ -17,7 +17,6 @@ fn test_app_run_invalid_yaml() {
 
     let result = app::run(test_path);
 
-    // 後始末
     let _ = fs::remove_file(test_path);
 
     assert!(result.is_err(), "app::run should fail for invalid YAML");

@@ -12,6 +12,12 @@ pub enum Type {
     StructWrapper {
         r#struct: Vec<Entry>,
     },
+    #[serde(rename_all = "snake_case")]
+    Array {
+        base: Box<Type>,
+        #[serde(alias = "size")]
+        length: usize,
+    },
     #[serde(rename = "custom")]
     Custom(String),
 }

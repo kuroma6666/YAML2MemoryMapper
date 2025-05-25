@@ -8,5 +8,6 @@ pub struct Entry {
     pub offset: u16,
     #[serde(rename = "type")]
     pub ty: Type,
+    pub length: Option<usize>,
     pub description: Option<String>,
 }

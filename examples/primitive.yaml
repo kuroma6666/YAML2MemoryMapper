@@ -14,3 +14,8 @@ entries:
   - name: reserved
     offset: 3
     type: uint32
+  
+  - name: array_value
+    offset: 7
+    type: uint8
+    length: 3

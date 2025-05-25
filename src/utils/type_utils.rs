@@ -27,6 +27,8 @@ pub fn size_of(ty: &Type, map: &EepromMap) -> usize {
                 0
             }
         }
+
+        Type::Array { base, length } => size_of(base, map) * length,
     }
 }
 
