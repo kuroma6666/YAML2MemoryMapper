@@ -33,3 +33,17 @@ fn validate_custom_autodetect_yaml() {
         result.err()
     );
 }
+
+#[test]
+fn validate_nonexistent_yaml() {
+    let path = Path::new("examples/does_not_exist.yaml");
+    let result = load_yaml(path);
+    assert!(result.is_err(), "Should fail for nonexistent file");
+}
+
+#[test]
+fn validate_invalid_yaml() {
+    let path = Path::new("examples/invalid.yaml");
+    let result = load_yaml(path);
+    assert!(result.is_err(), "Should fail for invalid YAML");
+}
