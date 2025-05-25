@@ -3,6 +3,48 @@ use crate::utils::type_utils::size_of;
 use std::collections::HashSet;
 use std::fmt::Write;
 
+fn resolve_c_type(
+    field_type: &Type,
+    field_name: &str,
+    map: &EepromMap,
+    visited: &mut HashSet<String>,
+    output: &mut String,
+) -> String {
+    match field_type {
+        Type::Uint8 => "uint8_t".into(),
+        Type::Uint16 => "uint16_t".into(),
+        Type::Uint32 => "uint32_t".into(),
+
+        Type::StructWrapper { r#struct: fields } => {
+            let subname = format!("{}_t", field_name);
+            if visited.insert(subname.clone()) {
+                generate_struct(&subname, fields, map, visited, output);
+            }
+            subname
+        }
+
+        Type::Custom(name) | Type::CustomCandidate(name) => {
+            let subname = format!("{}_t", name);
+            if visited.insert(subname.clone()) {
+                if let Some(fields) = map.types.get(name) {
+                    generate_struct(&subname, fields, map, visited, output);
+                }
+            }
+            subname
+        }
+    }
+}
+
+fn generate_padding(output: &mut String, current_offset: usize, target_offset: usize) -> usize {
+    if target_offset > current_offset {
+        let pad = target_offset - current_offset;
+        writeln!(output, "    uint8_t _pad{}[{}];", current_offset, pad).unwrap();
+        pad
+    } else {
+        0
+    }
+}
+
 fn generate_struct(
     name: &str,
     fields: &[Entry],
@@ -10,55 +52,24 @@ fn generate_struct(
     visited: &mut HashSet<String>,
     output: &mut String,
 ) {
-    if visited.contains(name) {
-        return;
-    }
-    visited.insert(name.to_string());
+    writeln!(output, "typedef struct {{").unwrap();
 
     let mut current_offset = 0;
-    writeln!(output, "typedef struct {{").unwrap();
     for field in fields {
-        let size = size_of(&field.ty);
-        let pad = if (field.offset as usize) > current_offset {
-            (field.offset as usize) - current_offset
-        } else {
-            0
-        };
-        if pad > 0 {
-            writeln!(output, "    uint8_t _pad{}[{}];", current_offset, pad).unwrap();
-            current_offset += pad;
-        }
+        let pad = generate_padding(output, current_offset, field.offset as usize);
+        current_offset += pad;
+
         if let Some(desc) = &field.description {
             writeln!(output, "    // {}", desc).unwrap();
         }
-        let c_type = match &field.ty {
-            Type::Uint8 => "uint8_t".to_string(),
-            Type::Uint16 => "uint16_t".to_string(),
-            Type::Uint32 => "uint32_t".to_string(),
-            Type::StructWrapper {
-                r#struct: subfields,
-            } => {
-                let subname = format!("{}_t", field.name);
-                generate_struct(&field.name, subfields, map, visited, output);
-                subname
-            }
-            Type::Custom(s) => {
-                if let Some(custom_fields) = map.types.get(s) {
-                    generate_struct(s, custom_fields, map, visited, output);
-                }
-                format!("{}_t", s)
-            }
-            Type::CustomCandidate(s) => {
-                if let Some(custom_fields) = map.types.get(s) {
-                    generate_struct(s, custom_fields, map, visited, output);
-                }
-                format!("{}_t", s)
-            }
-        };
+
+        let c_type = resolve_c_type(&field.ty, &field.name, map, visited, output);
         writeln!(output, "    {} {};", c_type, field.name).unwrap();
-        current_offset += size;
+
+        current_offset += size_of(&field.ty);
     }
-    writeln!(output, "}} {}_t;\n", name).unwrap();
+
+    writeln!(output, "}} {};\n", name).unwrap();
 }
 
 pub fn generate_c_structs(map: &EepromMap) -> String {
@@ -67,43 +78,32 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
 
     let mut visited = HashSet::new();
 
-    for entry in &map.entries {
-        if let Type::StructWrapper { r#struct: fields } = &entry.ty {
-            generate_struct(&entry.name, fields, map, &mut visited, &mut output);
-        } else if let Type::Custom(ref name) = entry.ty {
-            if let Some(fields) = map.types.get(name) {
-                generate_struct(name, fields, map, &mut visited, &mut output);
-            }
+    // 先に user-defined types を展開しておく
+    for (name, fields) in &map.types {
+        let struct_name = format!("{}_t", name);
+        if visited.insert(struct_name.clone()) {
+            generate_struct(&struct_name, fields, map, &mut visited, &mut output);
         }
     }
 
     writeln!(output, "typedef struct {{").unwrap();
     let mut current_offset = 0;
+
     for entry in &map.entries {
-        let size = size_of(&entry.ty);
-        let pad = if (entry.offset as usize) > current_offset {
-            (entry.offset as usize) - current_offset
-        } else {
-            0
-        };
-        if pad > 0 {
-            writeln!(output, "    uint8_t _pad{}[{}];", current_offset, pad).unwrap();
-            current_offset += pad;
-        }
+        let pad = generate_padding(&mut output, current_offset, entry.offset as usize);
+        current_offset += pad;
+
         if let Some(desc) = &entry.description {
             writeln!(output, "    // {}", desc).unwrap();
         }
-        let c_type = match &entry.ty {
-            Type::Uint8 => "uint8_t".to_string(),
-            Type::Uint16 => "uint16_t".to_string(),
-            Type::Uint32 => "uint32_t".to_string(),
-            Type::StructWrapper { .. } => format!("{}_t", entry.name),
-            Type::Custom(s) => format!("{}_t", s),
-            Type::CustomCandidate(s) => format!("{}_t", s),
-        };
+
+        let c_type = resolve_c_type(&entry.ty, &entry.name, map, &mut visited, &mut output);
         writeln!(output, "    {} {};", c_type, entry.name).unwrap();
-        current_offset += size;
+
+        current_offset += size_of(&entry.ty);
     }
-    writeln!(output, "}} eeprom_map_t;").unwrap();
+
+    writeln!(output, "}} eeprom_map_t;\n").unwrap();
+
     output
 }
