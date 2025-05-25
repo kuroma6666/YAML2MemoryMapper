@@ -7,9 +7,19 @@ types:
     - name: brightness
       offset: 0
       type: uint8
+      description: 明るさ設定
     - name: volume
       offset: 1
       type: uint8
+      description: 音量設定
+    - name: mode
+      offset: 2
+      type: uint8
+      description: モード設定
+    - name: reserved
+      offset: 3
+      type: uint32
+      description: 予約領域
 
 entries:
   - name: device_id

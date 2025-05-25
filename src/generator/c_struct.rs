@@ -1,37 +1,16 @@
+use crate::generator::c_define::generate_defines;
 use crate::model::{EepromMap, Entry, Type};
 use crate::utils::type_utils::size_of;
 use std::collections::HashSet;
 use std::fmt::Write;
 
-fn resolve_c_type(
-    field_type: &Type,
-    field_name: &str,
-    map: &EepromMap,
-    visited: &mut HashSet<String>,
-    output: &mut String,
-) -> String {
+fn resolve_c_type(field_type: &Type, field_name: &str) -> String {
     match field_type {
         Type::Uint8 => "uint8_t".into(),
         Type::Uint16 => "uint16_t".into(),
         Type::Uint32 => "uint32_t".into(),
-
-        Type::StructWrapper { r#struct: fields } => {
-            let subname = format!("{}_t", field_name);
-            if visited.insert(subname.clone()) {
-                generate_struct(&subname, fields, map, visited, output);
-            }
-            subname
-        }
-
-        Type::Custom(name) | Type::CustomCandidate(name) => {
-            let subname = format!("{}_t", name);
-            if visited.insert(subname.clone()) {
-                if let Some(fields) = map.types.get(name) {
-                    generate_struct(&subname, fields, map, visited, output);
-                }
-            }
-            subname
-        }
+        Type::StructWrapper { .. } => format!("{}_t", field_name),
+        Type::Custom(name) | Type::CustomCandidate(name) => format!("{}_t", name),
     }
 }
 
@@ -63,10 +42,34 @@ fn generate_struct(
             writeln!(output, "    // {}", desc).unwrap();
         }
 
-        let c_type = resolve_c_type(&field.ty, &field.name, map, visited, output);
-        writeln!(output, "    {} {};", c_type, field.name).unwrap();
-
-        current_offset += size_of(&field.ty);
+        let c_type = resolve_c_type(&field.ty, &field.name);
+        match &field.ty {
+            Type::StructWrapper {
+                r#struct: sub_fields,
+            } => {
+                let subname = format!("{}_t", field.name);
+                if visited.insert(subname.clone()) {
+                    generate_struct(&subname, sub_fields, map, visited, output);
+                }
+            }
+            Type::Custom(name) | Type::CustomCandidate(name) => {
+                let subname = format!("{}_t", name);
+                if visited.insert(subname.clone()) {
+                    if let Some(sub_fields) = map.types.get(name) {
+                        generate_struct(&subname, sub_fields, map, visited, output);
+                    }
+                }
+            }
+            _ => {}
+        }
+        let field_size = size_of(&field.ty, map);
+        writeln!(
+            output,
+            "    {} {}; // size: {}",
+            c_type, field.name, field_size
+        )
+        .unwrap();
+        current_offset += size_of(&field.ty, map);
     }
 
     writeln!(output, "}} {};\n", name).unwrap();
@@ -75,7 +78,8 @@ fn generate_struct(
 pub fn generate_c_structs(map: &EepromMap) -> String {
     let mut output = String::new();
     writeln!(output, "#pragma once\n#include <stdint.h>\n").unwrap();
-
+    let defines = generate_defines(map);
+    writeln!(output, "{}", defines).unwrap();
     let mut visited = HashSet::new();
 
     // 先に user-defined types を展開しておく
@@ -97,10 +101,34 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
             writeln!(output, "    // {}", desc).unwrap();
         }
 
-        let c_type = resolve_c_type(&entry.ty, &entry.name, map, &mut visited, &mut output);
-        writeln!(output, "    {} {};", c_type, entry.name).unwrap();
-
-        current_offset += size_of(&entry.ty);
+        let c_type = resolve_c_type(&entry.ty, &entry.name);
+        match &entry.ty {
+            Type::StructWrapper {
+                r#struct: sub_fields,
+            } => {
+                let subname = format!("{}_t", entry.name);
+                if visited.insert(subname.clone()) {
+                    generate_struct(&subname, sub_fields, map, &mut visited, &mut output);
+                }
+            }
+            Type::Custom(name) | Type::CustomCandidate(name) => {
+                let subname = format!("{}_t", name);
+                if visited.insert(subname.clone()) {
+                    if let Some(sub_fields) = map.types.get(name) {
+                        generate_struct(&subname, sub_fields, map, &mut visited, &mut output);
+                    }
+                }
+            }
+            _ => {}
+        }
+        let field_size = size_of(&entry.ty, map);
+        writeln!(
+            output,
+            "    {} {}; // size: {}",
+            c_type, entry.name, field_size
+        )
+        .unwrap();
+        current_offset += size_of(&entry.ty, map);
     }
 
     writeln!(output, "}} eeprom_map_t;\n").unwrap();
