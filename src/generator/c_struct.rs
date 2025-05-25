@@ -62,9 +62,14 @@ fn generate_struct(
             }
             _ => {}
         }
-        writeln!(output, "    {} {};", c_type, field.name).unwrap();
-
-        current_offset += size_of(&field.ty);
+        let field_size = size_of(&field.ty, map);
+        writeln!(
+            output,
+            "    {} {}; // size: {}",
+            c_type, field.name, field_size
+        )
+        .unwrap();
+        current_offset += size_of(&field.ty, map);
     }
 
     writeln!(output, "}} {};\n", name).unwrap();
@@ -116,9 +121,14 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
             }
             _ => {}
         }
-        writeln!(output, "    {} {};", c_type, entry.name).unwrap();
-
-        current_offset += size_of(&entry.ty);
+        let field_size = size_of(&entry.ty, map);
+        writeln!(
+            output,
+            "    {} {}; // size: {}",
+            c_type, entry.name, field_size
+        )
+        .unwrap();
+        current_offset += size_of(&entry.ty, map);
     }
 
     writeln!(output, "}} eeprom_map_t;\n").unwrap();
