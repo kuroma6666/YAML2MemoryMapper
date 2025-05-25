@@ -10,3 +10,7 @@ entries:
   - name: firmware_version
     offset: 2
     type: uint8
+
+  - name: reserved
+    offset: 3
+    type: uint32
