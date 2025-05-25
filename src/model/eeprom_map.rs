@@ -13,5 +13,5 @@ pub struct EepromMap {
     pub endianness: Endianness,
     pub entries: Vec<Entry>,
     #[serde(default)]
-    pub types: HashMap<String, Vec<Entry>>, // for Custom(String) support
+    pub types: HashMap<String, Vec<Entry>>, // Custom(String) サポート
 }

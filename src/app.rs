@@ -1,4 +1,3 @@
-// Update the path below to match your actual module structure, e.g.:
 use crate::generator::c_struct::generate_c_structs;
 use crate::parser::load_yaml;
 use crate::utils::file_utils::get_header_path;

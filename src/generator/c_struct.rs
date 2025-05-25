@@ -11,7 +11,7 @@ fn resolve_c_type(field_type: &Type, field_name: &str) -> String {
         Type::Uint32 => "uint32_t".into(),
         Type::StructWrapper { .. } => format!("{}_t", field_name),
         Type::Custom(name) | Type::CustomCandidate(name) => format!("{}_t", name),
-        Type::Array { base, .. } => resolve_c_type(base, field_name), // base 型だけ返す
+        Type::Array { base, .. } => resolve_c_type(base, field_name), // NOTE:base 型だけ返す
     }
 }
 
@@ -71,7 +71,7 @@ fn generate_struct(
             writeln!(output, "    // {}", desc).unwrap();
         }
 
-        // 再帰的構造体出力（必要なら）
+        // NOTE:再帰的構造体出力（必要なら）
         match &field.ty {
             Type::StructWrapper { r#struct: sub_fields } => {
                 let subname = format!("{}_t", field.name);
@@ -88,7 +88,7 @@ fn generate_struct(
                 }
             }
             Type::Array { base, .. } => {
-                // 配列要素の型が構造体なら再帰出力
+                // NOTE:配列要素の型が構造体なら再帰出力
                 match &**base {
                     Type::StructWrapper { r#struct: sub_fields } => {
                         let subname = format!("{}_t", field.name);
@@ -124,7 +124,7 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
 
     let mut visited = HashSet::new();
 
-    // 先に user-defined types を展開
+    // NOTE:先に user-defined types を展開
     for (name, fields) in &map.types {
         let struct_name = format!("{}_t", name);
         if visited.insert(struct_name.clone()) {
@@ -132,7 +132,7 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
         }
     }
 
-    // メインの eeprom_map_t 構造体出力
+    // NOTE: eeprom_map_t 構造体出力
     writeln!(output, "typedef struct {{").unwrap();
     let mut current_offset = 0;
 
@@ -143,8 +143,7 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
         if let Some(desc) = &entry.description {
             writeln!(output, "    // {}", desc).unwrap();
         }
-
-        // 同様に再帰展開
+        // NOTE:再帰的構造体出力（必要なら）
         match &entry.ty {
             Type::StructWrapper { r#struct: sub_fields } => {
                 let subname = format!("{}_t", entry.name);
