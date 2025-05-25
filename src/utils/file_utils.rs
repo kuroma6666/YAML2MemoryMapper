@@ -1,4 +1,3 @@
-
 pub fn get_header_path() -> String {
     std::env::args()
         .nth(2)
