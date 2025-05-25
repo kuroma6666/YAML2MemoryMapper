@@ -40,9 +40,7 @@ fn resolve_type(ty: &mut Type, types: &HashMap<String, Vec<Entry>>) -> Result<()
             }
             Ok(())
         }
-        Type::Array { base, length: _ } => {
-            resolve_type(base, types)
-        }
+        Type::Array { base, length: _ } => resolve_type(base, types),
         Type::Custom(name) => {
             if !types.contains_key(name) {
                 Err(format!("Undefined custom type: {}", name))

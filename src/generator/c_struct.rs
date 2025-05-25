@@ -73,7 +73,9 @@ fn generate_struct(
 
         // NOTE:再帰的構造体出力（必要なら）
         match &field.ty {
-            Type::StructWrapper { r#struct: sub_fields } => {
+            Type::StructWrapper {
+                r#struct: sub_fields,
+            } => {
                 let subname = format!("{}_t", field.name);
                 if visited.insert(subname.clone()) {
                     generate_struct(&subname, sub_fields, map, visited, output);
@@ -90,7 +92,9 @@ fn generate_struct(
             Type::Array { base, .. } => {
                 // NOTE:配列要素の型が構造体なら再帰出力
                 match &**base {
-                    Type::StructWrapper { r#struct: sub_fields } => {
+                    Type::StructWrapper {
+                        r#struct: sub_fields,
+                    } => {
                         let subname = format!("{}_t", field.name);
                         if visited.insert(subname.clone()) {
                             generate_struct(&subname, sub_fields, map, visited, output);
@@ -145,7 +149,9 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
         }
         // NOTE:再帰的構造体出力（必要なら）
         match &entry.ty {
-            Type::StructWrapper { r#struct: sub_fields } => {
+            Type::StructWrapper {
+                r#struct: sub_fields,
+            } => {
                 let subname = format!("{}_t", entry.name);
                 if visited.insert(subname.clone()) {
                     generate_struct(&subname, sub_fields, map, &mut visited, &mut output);
@@ -159,25 +165,25 @@ pub fn generate_c_structs(map: &EepromMap) -> String {
                     }
                 }
             }
-            Type::Array { base, .. } => {
-                match &**base {
-                    Type::StructWrapper { r#struct: sub_fields } => {
-                        let subname = format!("{}_t", entry.name);
-                        if visited.insert(subname.clone()) {
+            Type::Array { base, .. } => match &**base {
+                Type::StructWrapper {
+                    r#struct: sub_fields,
+                } => {
+                    let subname = format!("{}_t", entry.name);
+                    if visited.insert(subname.clone()) {
+                        generate_struct(&subname, sub_fields, map, &mut visited, &mut output);
+                    }
+                }
+                Type::Custom(name) | Type::CustomCandidate(name) => {
+                    let subname = format!("{}_t", name);
+                    if visited.insert(subname.clone()) {
+                        if let Some(sub_fields) = map.types.get(name) {
                             generate_struct(&subname, sub_fields, map, &mut visited, &mut output);
                         }
                     }
-                    Type::Custom(name) | Type::CustomCandidate(name) => {
-                        let subname = format!("{}_t", name);
-                        if visited.insert(subname.clone()) {
-                            if let Some(sub_fields) = map.types.get(name) {
-                                generate_struct(&subname, sub_fields, map, &mut visited, &mut output);
-                            }
-                        }
-                    }
-                    _ => {}
                 }
-            }
+                _ => {}
+            },
             _ => {}
         }
 
